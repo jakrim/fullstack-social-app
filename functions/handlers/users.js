@@ -4,8 +4,13 @@ const config = require('../util/config');
 firebase.initializeApp(config);
 console.log('config', config.storageBucket);
 
-const { validateSignupData, validateLoginData } = require('../util/validators');
+const {
+  validateSignupData,
+  validateLoginData,
+  reduceUserDetails,
+} = require('../util/validators');
 
+// Sign users up
 exports.signUp = (req, res) => {
   const newUser = {
     email: req.body.email,
@@ -61,6 +66,7 @@ exports.signUp = (req, res) => {
     });
 };
 
+// Log user in
 exports.login = (req, res) => {
   const user = {
     email: req.body.email,
@@ -93,6 +99,22 @@ exports.login = (req, res) => {
     });
 };
 
+// Add user details
+exports.addUserDetails = (req, res) => {
+  let userDetails = reduceUserDetails(req.body);
+
+  db.doc(`/users/${req.user.handle}`)
+    .update(userDetails)
+    .then(() => {
+      return res.json({ message: 'Details added successfully' });
+    })
+    .catch((err) => {
+      console.error(err);
+      return res.statis(500).json({ error: err.code });
+    });
+};
+
+// Upload a profile image for user
 exports.uploadImage = (req, res) => {
   console.log('config inside uploadImage', config.storageBucket);
   const BusBoy = require('busboy');
@@ -120,7 +142,7 @@ exports.uploadImage = (req, res) => {
   busboy.on('finish', () => {
     admin
       .storage()
-      .bucket()
+      .bucket(config.storageBucket)
       .upload(imageToBeUploaded.filepath, {
         resumable: false,
         metadata: {
