@@ -19,8 +19,18 @@ let db = {
       commentCount: 2,
     },
   ],
+  comments: [
+    {
+      userHandle: 'user',
+      screamId: 'kdjsfgdksuufhgkdsufky',
+      body: 'nice one mate!',
+      createdAt: '2020-07-10T10:59:52.798Z',
+    },
+  ],
 };
+
 const userDetails = {
+  // Redux data
   credentials: {
     userId: 'k8CpQDHbnsO2n8rqRaMnj2vKQU62',
     email: 'newnew@test.com',
@@ -33,7 +43,7 @@ const userDetails = {
     location: 'Franklin Lakes, NJ',
   },
   likes: [
-    { userHandle: 'user', screamId: screamId },
-    { userHandle: 'user', screamId: screamId },
+    { userHandle: 'user', screamId: 'AoL5FoEhFj37ScxBUL9c' },
+    { userHandle: 'user', screamId: 'DWT9XE3mYBxCTQHRgyGo' },
   ],
 };

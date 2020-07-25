@@ -2,7 +2,6 @@ const { admin, db } = require('../util/admin');
 const firebase = require('firebase');
 const config = require('../util/config');
 firebase.initializeApp(config);
-console.log('config', config.storageBucket);
 
 const {
   validateSignupData,
@@ -114,9 +113,36 @@ exports.addUserDetails = (req, res) => {
     });
 };
 
+// Get own user details
+exports.getAuthenticatedUser = (req, res) => {
+  let userData = {};
+
+  db.doc(`users/${req.user.handle}`)
+    .get()
+    .then((doc) => {
+      if (doc.exists) {
+        userData.credentials = doc.data();
+        return db
+          .collection('likes')
+          .where('userHandle', '==', req.user.handle)
+          .get()
+          .then((data) => {
+            userData.likes = [];
+            data.forEach((doc) => {
+              userData.likes.push(doc.data());
+            });
+            return res.json(userData);
+          })
+          .catch((err) => {
+            console.error(err);
+            return res.status(500).json({ error: err.code });
+          });
+      }
+    });
+};
+
 // Upload a profile image for user
 exports.uploadImage = (req, res) => {
-  console.log('config inside uploadImage', config.storageBucket);
   const BusBoy = require('busboy');
   const path = require('path');
   const os = require('os');
