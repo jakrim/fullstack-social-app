@@ -20,26 +20,32 @@ exports.getAllScreams = (req, res) => {
 
 exports.postOneScream = (req, res) => {
   if (req.body.body.trim() === '') {
-    return res.status(400).json({ body: 'Body must not be emty' });
+    return res.status(400).json({ body: 'Body must not be empty' });
   }
 
   const newScream = {
     body: req.body.body,
     userHandle: req.user.handle,
+    userImage: req.user.imageUrl,
     createdAt: new Date().toISOString(),
+    likeCount: 0,
+    commentCount: 0,
   };
 
   db.collection('screams')
     .add(newScream)
     .then((doc) => {
-      res.json({ message: `document ${doc.id} created successfully` });
+      const resScream = newScream;
+      resScream.screamId = doc.id;
+      res.json(resScream);
     })
     .catch((err) => {
       console.error(err);
-      res.status(500).json({ error: 'something went wrong' });
+      res.status(500).json({ error: 'Something went wrong' });
     });
 };
 
+// Fetch one Scream
 exports.getScream = (req, res) => {
   let screamData = {};
 
@@ -67,5 +73,36 @@ exports.getScream = (req, res) => {
     .catch((err) => {
       console.error(err);
       res.status(500).json({ error: err.code });
+    });
+};
+
+// Comment on one Scream
+exports.commentOnScream = (req, res) => {
+  if (req.body.body.trim() === '')
+    return res.status(400).json({ error: 'Must not be empty' });
+
+  const newComment = {
+    body: req.body.body,
+    createdAt: new Date().toISOString(),
+    screamId: req.params.screamId,
+    userHandle: req.user.handle,
+    userImage: req.user.imageUrl,
+  };
+
+  db.doc(`/screams/${req.params.screamId}`)
+    .get()
+    .then((doc) => {
+      if (!doc.exists) {
+        return res.status(404).json({ error: 'Scream not found' });
+      }
+      console.log('exports.commentOnScream -> newComment', newComment);
+      return db.collection('comments').add(newComment);
+    })
+    .then(() => {
+      res.json(newComment);
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).json({ error: 'Something went wrong' });
     });
 };
