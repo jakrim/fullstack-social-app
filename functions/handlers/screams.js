@@ -9,13 +9,20 @@ exports.getAllScreams = (req, res) => {
       data.forEach((doc) => {
         screams.push({
           screamId: doc.id,
-          ...doc.data(),
+          body: doc.data().body,
+          userHandle: doc.data().userHandle,
+          createdAt: doc.data().createdAt,
+          commentCount: doc.data().commentCount,
+          likeCount: doc.data().likeCount,
+          userImage: doc.data().userImage
         });
       });
-
       return res.json(screams);
     })
-    .catch((err) => console.error(err));
+    .catch((err) => {
+      console.error(err);
+      res.status(500).json({ error: err.code });
+    });
 };
 
 exports.postOneScream = (req, res) => {
@@ -29,7 +36,7 @@ exports.postOneScream = (req, res) => {
     userImage: req.user.imageUrl,
     createdAt: new Date().toISOString(),
     likeCount: 0,
-    commentCount: 0,
+    commentCount: 0
   };
 
   db.collection('screams')
@@ -40,15 +47,13 @@ exports.postOneScream = (req, res) => {
       res.json(resScream);
     })
     .catch((err) => {
+      res.status(500).json({ error: 'something went wrong' });
       console.error(err);
-      res.status(500).json({ error: 'Something went wrong' });
     });
 };
-
-// Fetch one Scream
+// Fetch one scream
 exports.getScream = (req, res) => {
   let screamData = {};
-
   db.doc(`/screams/${req.params.screamId}`)
     .get()
     .then((doc) => {
@@ -75,19 +80,19 @@ exports.getScream = (req, res) => {
       res.status(500).json({ error: err.code });
     });
 };
-
-// Comment on one Scream
+// Comment on a comment
 exports.commentOnScream = (req, res) => {
   if (req.body.body.trim() === '')
-    return res.status(400).json({ error: 'Must not be empty' });
+    return res.status(400).json({ comment: 'Must not be empty' });
 
   const newComment = {
     body: req.body.body,
     createdAt: new Date().toISOString(),
     screamId: req.params.screamId,
     userHandle: req.user.handle,
-    userImage: req.user.imageUrl,
+    userImage: req.user.imageUrl
   };
+  console.log(newComment);
 
   db.doc(`/screams/${req.params.screamId}`)
     .get()
@@ -104,11 +109,11 @@ exports.commentOnScream = (req, res) => {
       res.json(newComment);
     })
     .catch((err) => {
-      console.error(err);
+      console.log(err);
       res.status(500).json({ error: 'Something went wrong' });
     });
 };
-
+// Like a scream
 exports.likeScream = (req, res) => {
   const likeDocument = db
     .collection('likes')
@@ -117,6 +122,8 @@ exports.likeScream = (req, res) => {
     .limit(1);
 
   const screamDocument = db.doc(`/screams/${req.params.screamId}`);
+
+  let screamData;
 
   screamDocument
     .get()
@@ -135,7 +142,7 @@ exports.likeScream = (req, res) => {
           .collection('likes')
           .add({
             screamId: req.params.screamId,
-            userHandle: req.user.handle,
+            userHandle: req.user.handle
           })
           .then(() => {
             screamData.likeCount++;
@@ -160,7 +167,11 @@ exports.unlikeScream = (req, res) => {
     .where('userHandle', '==', req.user.handle)
     .where('screamId', '==', req.params.screamId)
     .limit(1);
+
   const screamDocument = db.doc(`/screams/${req.params.screamId}`);
+
+  let screamData;
+
   screamDocument
     .get()
     .then((doc) => {
@@ -193,7 +204,6 @@ exports.unlikeScream = (req, res) => {
       res.status(500).json({ error: err.code });
     });
 };
-
 // Delete a scream
 exports.deleteScream = (req, res) => {
   const document = db.doc(`/screams/${req.params.screamId}`);
